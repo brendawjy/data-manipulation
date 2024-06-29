@@ -1,0 +1,77 @@
+rm(list = ls())
+library(tidyverse)
+data <- read_csv("https://raw.githubusercontent.com/BUSN32100/data_files/master/recent-grads.csv")
+
+# which major has the lowest unemployment rate?
+data %>% 
+  arrange(unemployment_rate) %>% 
+  select(rank, major, unemployment_rate)
+# answer: Maths and computer science
+
+# rounding the unemployment rate into only 1 decimal
+data %>% 
+  arrange(unemployment_rate) %>% 
+  select(rank, major, unemployment_rate) %>% 
+  mutate(unemployment_rate = round(unemployment_rate, 1))
+
+# which major has the highest percentage of women?
+data %>% 
+  arrange(desc(sharewomen)) %>% 
+  select(total, major, sharewomen) %>%
+  head(3)
+# answer: Early Childhood Education
+
+# how do the distributions of median income compare across
+# major categories?
+
+ggplot(data = data, aes(x = median))+
+  geom_histogram()
+
+# use binwidth = 1000
+ggplot(data = data, aes(x = median))+
+  geom_histogram(binwidth = 1000)
+
+# use binwidth = 5000
+ggplot(data = data, aes(x = median))+
+  geom_histogram(binwidth = 5000)
+
+# calculate summary statistics with summarise function
+data %>% 
+  summarise(min = min(median), max = max(median),
+            mean = mean(median), med = median(median),
+            sd = sd(median), q1 = quantile(median, probs = 0.25),
+            q3 = quantile(median, probs = 0.75))
+
+# facet the plot by major category.
+# Plot the distribution of median income using a histogram,faceted by major_category
+ggplot(data = data, aes(x = median))+
+  geom_histogram()+
+  facet_wrap(.~major_category)
+
+# which major has the highest median income? lowest median income? equal to the median value of the median?
+data[which.max(data$median),]
+data[which.min(data$median),]
+data %>% 
+  filter(median == 36000) %>% 
+  select(major_category, median)
+
+# which major category is the most popular?
+# use count function
+data %>% 
+  count(major_category) %>% 
+  arrange(desc(n))
+
+# what types of majors do women tend to major in?
+# create a new vector called stem_categories
+stem_categories <- c("Biology & Life Science", "Computers & Mathematics", "Engineering","Physical Sciences")
+# create a new variable that categorize whether a major is STEM or not
+data <- data %>% 
+  mutate(major_type = ifelse(major_category %in% stem_categories, "stem", "not stem"))
+
+ggplot(data, aes(x = median, y = sharewomen, color = major_type))+
+         geom_point()
+
+data %>% 
+  filter(major_type == "stem", median < 36000) %>% 
+  select(major, median, p25th, median, p75th) %>% 
+  arrange(median)
